@@ -44,6 +44,7 @@ services:
     ports:
       - "8000:8000"
     environment:
+      - DEV_ALLOW_NOAUTH=1
       - DATABASE_URL=postgresql://biomed:biomedpass@db:5432/biomed
       - REDIS_URL=redis://redis:6379
       - MILVUS_HOST=milvus
