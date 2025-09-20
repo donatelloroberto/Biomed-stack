@@ -1,26 +1,21 @@
-# biomed-stack
+# biomed-stack (Full workers added)
 
-**Quick**: This repo is a research-oriented stack for computational disease research and drug discovery using open-source models. It is not for wet-lab or procedural instruction generation. Use responsibly.
+This repository expands the starter skeleton with **GPU-ready worker Dockerfiles and FastAPI wrappers**
+for ESM-2 embeddings, BioMedLM inference (8-bit via bitsandbytes), OpenFold/AlphaFold inference (wrapper),
+MegaMolBART molecule generation, and DiffDock docking.
 
-## Components
-- **orchestrator**: FastAPI service that provides RBAC, audit logging, RAG prompt building, and LLM orchestration (BioMedLM recommended).
-- **workers**: lightweight GPU workers that host ESM-2 embeddings, structure inference (OpenFold/AlphaFold), molecule generation (MegaMolBART), and docking (DiffDock). They expose small REST endpoints.
-- **Milvus**: vector DB for retrieval (RAG). Included in docker-compose.
-- **Keycloak**: identity + role-based access control (dev-mode included in docker-compose).
-- **Classifier**: small procedural-detector to flag outputs that might contain wet-lab steps; flagged outputs are routed to a reviewer queue.
+IMPORTANT: This repo **does not** include model weights or large biological databases. You **must** download
+model checkpoints yourself (commands provided in `scripts/download_models.sh`) and place them under `/models` or
+use the helper script which uses `huggingface_hub.snapshot_download`. You must accept each model's license.
 
-## Quickstart (dev)
-1. Edit `env.sample` → `.env` (add `HF_TOKEN`, etc.).
-2. `bash scripts/setup_env.sh` (installs CLI tools; does not download heavy models).
-3. `docker compose up --build` (will start Postgres, Redis, Milvus, Keycloak, Orchestrator). Worker images are stubs — configure GPUs and model weights before production.
-4. Build your RAG index: `python scripts/build_milvus_index.py --pubmed ./data/pmc_paragraphs.jsonl`.
-5. Use Keycloak to create users/roles. Use `POST /ideate` to generate conceptual hypotheses.
+Safety: the orchestrator includes a procedural detector and HITL gating logic; do not remove. This stack is for
+computational research only — not for generating wet-lab protocols.
 
-## Important notes
-- **Safety**: outputs containing procedural language are flagged and not returned directly; a reviewer must approve them.
-- **Licenses**: check each model's license before production/commercial use. See `README_FILES/NOTE_LICENSES.md`.
-- **Compute**: large models require GPUs. For inference, use quantization (bitsandbytes) and accelerate where possible.
+## Quick steps (high level)
+1. Install Docker + NVIDIA Container Toolkit (for GPU runtime). See README_FILES for links.
+2. `cp env.sample .env` and fill `HF_TOKEN`.
+3. Run `bash scripts/download_models.sh` **locally** to download model weights into `./models` (requires HF login).
+4. `docker compose up --build` (compose will include GPU-enabled workers; ensure Docker has GPU access).
+5. Follow `README_FILES/DEPLOY_NOTES.md` for AlphaFold DB / MSA setup and exact resource sizing.
 
-## Next steps
-- Replace worker stubs with full repo clones for OpenFold, MegaMolBART, DiffDock and mount model data to `/models` inside each worker container.
-- Train or tune the procedural classifier on your internal red-team dataset for production.
+See `scripts/` for helper download commands and `workers/` for GPU-ready worker containers.

@@ -51,27 +51,59 @@ services:
       - KEYCLOAK_URL=http://keycloak:8080
     volumes:
       - ./data:/data
+      - ./models:/models:ro
     networks:
       - biomed-net
 
-  # worker stubs (in production replace with GPU-enabled images + mounted models)
   esm_worker:
     build: ./workers/esm_service
+    runtime: nvidia
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+    volumes:
+      - ./models/esm:/models/esm:ro
+    networks:
+      - biomed-net
+
+  biomedlm_worker:
+    build: ./workers/biomedlm_service
+    runtime: nvidia
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+    volumes:
+      - ./models/biomedlm:/models/biomedlm:ro
     networks:
       - biomed-net
 
   openfold_worker:
     build: ./workers/openfold_service
+    runtime: nvidia
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+    volumes:
+      - ./models/openfold:/models/openfold:ro
+      - ./data/alphafold_db:/data/alphafold_db:ro
     networks:
       - biomed-net
 
   megamolbart_worker:
     build: ./workers/megamolbart_service
+    runtime: nvidia
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+    volumes:
+      - ./models/megamolbart:/models/megamolbart:ro
     networks:
       - biomed-net
 
   diffdock_worker:
     build: ./workers/diffdock_service
+    runtime: nvidia
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+    volumes:
+      - ./models/diffdock:/models/diffdock:ro
+      - ./data/pdbs:/data/pdbs:ro
     networks:
       - biomed-net
 
