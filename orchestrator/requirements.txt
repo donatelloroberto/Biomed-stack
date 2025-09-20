@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+transformers>=4.30
+accelerate
+sentence-transformers
+pymilvus==2.3.0
+sqlalchemy
+psycopg2-binary
+python-keycloak
+rdkit-pypi
+loguru
+python-multipart
+requests

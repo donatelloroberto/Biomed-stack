@@ -1,0 +1,83 @@
+version: "3.8"
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: biomed
+      POSTGRES_PASSWORD: biomedpass
+      POSTGRES_DB: biomed
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - biomed-net
+
+  redis:
+    image: redis:7
+    networks:
+      - biomed-net
+
+  milvus:
+    image: milvusdb/milvus:v2.3.0
+    environment:
+      TZ: "UTC"
+    ports:
+      - "19530:19530"
+    networks:
+      - biomed-net
+    volumes:
+      - milvus_data:/var/lib/milvus
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:21.1.1
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8080:8080"
+    networks:
+      - biomed-net
+
+  orchestrator:
+    build: ./orchestrator
+    depends_on: ["db", "redis", "milvus", "keycloak"]
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://biomed:biomedpass@db:5432/biomed
+      - REDIS_URL=redis://redis:6379
+      - MILVUS_HOST=milvus
+      - MILVUS_PORT=19530
+      - KEYCLOAK_URL=http://keycloak:8080
+    volumes:
+      - ./data:/data
+    networks:
+      - biomed-net
+
+  # worker stubs (in production replace with GPU-enabled images + mounted models)
+  esm_worker:
+    build: ./workers/esm_service
+    networks:
+      - biomed-net
+
+  openfold_worker:
+    build: ./workers/openfold_service
+    networks:
+      - biomed-net
+
+  megamolbart_worker:
+    build: ./workers/megamolbart_service
+    networks:
+      - biomed-net
+
+  diffdock_worker:
+    build: ./workers/diffdock_service
+    networks:
+      - biomed-net
+
+volumes:
+  db_data:
+  milvus_data:
+
+networks:
+  biomed-net:
